@@ -49,16 +49,27 @@ def handle_proxy():
   if not is_valid_url(request_parsed):
     abort(404)
   
-  # Get value
-  proxy_request = requests.get(request_url)
-  if proxy_request.status_code != requests.codes.ok:
-    abort(proxy_request.status_code)
+  # Get value from proxied url
+  proxy_request = make_proxy(request_url)
+  if proxy_request['status_code'] != requests.codes.ok:
+    abort(proxy_request['status_code'])
   
-  return Response(proxy_request.text, None, proxy_request.headers)
+  return Response(proxy_request['text'], 
+    proxy_request['status_code'], proxy_request['headers'])
 
 
+# Get proxy URL and cache the results
+@cache.memoize(proxy_cache * 60)
+def make_proxy(url):
+  r = requests.get(url)
+  return {
+    'text': r.text,
+    'status_code': r.status_code,
+    'headers': r.headers,
+  }
 
-# Helper function
+
+# Check if valid key is in url
 def is_valid_url(url_parsed):
   # Make sure the key is in the path, and not the
   # query string, otherwise the service could be abused
