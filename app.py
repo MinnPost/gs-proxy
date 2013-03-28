@@ -19,10 +19,22 @@ if 'GS_PROXY_CACHE' in os.environ:
 app = Flask(__name__)
 if debug_app:
   app.debug = True
-  
+
+
+# Set up cache
+cache_config = {
+  'CACHE_TYPE': 'filesystem',
+  'CACHE_THRESHOLD': 1000,
+  'CACHE_DIR': 'cache'
+}
+cache = Cache(config = cache_config)
+cache.init_app(app, config = cache_config)
+
+
 
 # Just a default route
 @app.route('/')
+@cache.cached(timeout = 500)
 def index():
   return 'Supported keys: %s' % ', '.join(proxy_keys)
     
