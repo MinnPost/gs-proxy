@@ -22,7 +22,9 @@ domain_check = 'google'
 jsonp_to_json_keys = {
   'json-in-script': 'json'
 }
-
+jsonp_header_overrides = {
+  'content-type': 'text/javascript; charset=UTF-8'
+}
 
 # Make and configure the Flask app
 app = Flask(__name__)
@@ -66,10 +68,11 @@ def handle_proxy():
   if proxy_request['status_code'] != requests.codes.ok:
     abort(proxy_request['status_code'])
   
-  # If callback, wrap response text
+  # If callback, wrap response text and change some headers
   response_text = proxy_request['text']
   if callback:
     response_text = '%s(%s);' % (callback, proxy_request['text'])
+    proxy_request['headers'] = dict(proxy_request['headers'].items() + jsonp_header_overrides.items())
   
   return Response(response_text, 
     proxy_request['status_code'], proxy_request['headers'])
